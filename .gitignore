@@ -1,2 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Logs
+*.log
+
 # OS
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Test artifacts
+coverage/

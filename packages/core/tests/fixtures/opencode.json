@@ -1,0 +1,20 @@
+{
+  "session": { "id": "ses_abc123", "projectID": "proj_x", "title": "Investigate flaky test" },
+  "messages": [
+    {
+      "id": "msg_1",
+      "role": "user",
+      "time": { "created": 1749549600000 },
+      "parts": [{ "id": "prt_1", "type": "text", "text": "Why is this test flaky?" }]
+    },
+    {
+      "id": "msg_2",
+      "role": "assistant",
+      "time": { "created": 1749549605000 },
+      "parts": [
+        { "id": "prt_2", "type": "text", "text": "Likely a timing race." },
+        { "id": "prt_3", "type": "tool", "tool": "bash", "input": { "cmd": "npm test" }, "output": "1 failing" }
+      ]
+    }
+  ]
+}

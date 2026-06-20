@@ -21,7 +21,7 @@ is discovered.
 ## Prerequisite: the `pss` CLI
 
 The skill shells out to the `pss` CLI, which must be on your `PATH`. Build and link
-it from a checkout of the [pss repo](https://github.com/arxhive/pss):
+it from a checkout of this repo ([arxhive/pss-plugin](https://github.com/arxhive/pss-plugin)):
 
 ```bash
 pnpm install
