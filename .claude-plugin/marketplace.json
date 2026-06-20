@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "pss",
+  "version": "0.1.0",
+  "description": "PSS plugins for Claude Code - share, hand off, and fork agent sessions.",
+  "owner": {
+    "name": "Artem Kolomeetc",
+    "email": "artesdi@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "pss",
+      "description": "Adds the /pss skill to capture the current Claude Code session and upload it to the PSS portal for sharing, cloning, and forking into any supported agent.",
+      "version": "0.1.0",
+      "source": "./plugins/pss",
+      "category": "productivity"
+    }
+  ]
+}

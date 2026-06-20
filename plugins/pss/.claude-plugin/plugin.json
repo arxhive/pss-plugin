@@ -1,0 +1,13 @@
+{
+  "name": "pss",
+  "description": "Share, hand off, and fork Claude Code sessions via PSS ('GitHub for agent sessions'). Adds the /pss skill to capture the current session and upload it to the PSS portal, where it can be browsed, cloned, or forked into any supported agent.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Artem Kolomeetc",
+    "email": "artesdi@gmail.com"
+  },
+  "homepage": "https://github.com/arxhive/pss",
+  "repository": "https://github.com/arxhive/pss-plugin",
+  "license": "MIT",
+  "keywords": ["pss", "session-sharing", "handoff", "fork", "agent-sessions"]
+}
