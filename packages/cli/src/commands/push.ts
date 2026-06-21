@@ -64,7 +64,17 @@ async function resolveAgentAndTranscript(
 async function runPush(options: PushOptions, command: Command): Promise<void> {
   const ctx = buildContext(globalOptionsFrom(command));
   const cwd = process.cwd();
-  logInput(COMMAND, { agent: options.agent ?? "auto", project: options.project ?? null });
+  logInput(COMMAND, {
+    agent: options.agent ?? "auto",
+    project: options.project ?? null,
+    authenticated: ctx.token !== undefined,
+  });
+  if (ctx.token === undefined) {
+    throw new CliError(
+      'Not authenticated - run "pss auth login".',
+      EXIT_CODE.NOT_AUTHENTICATED,
+    );
+  }
 
   const { agent, transcript } = await resolveAgentAndTranscript(cwd, options.agent);
   // Keep the raw transcript alongside the neutral turns so cloning back into

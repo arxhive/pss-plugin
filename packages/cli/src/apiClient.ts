@@ -58,17 +58,22 @@ async function parseError(response: Response): Promise<string> {
   }
 }
 
+export interface IdentityDto {
+  readonly id: string;
+  readonly name: string | null;
+  readonly email: string | null;
+}
+
+const STATUS_EXIT_MAP: Record<number, CliError["exitCode"]> = {
+  400: EXIT_CODE.USAGE_ERROR,
+  401: EXIT_CODE.NOT_AUTHENTICATED,
+  403: EXIT_CODE.FORBIDDEN,
+  404: EXIT_CODE.NOT_FOUND,
+  413: EXIT_CODE.PAYLOAD_TOO_LARGE,
+};
+
 function mapStatusToExit(status: number): CliError["exitCode"] {
-  if (status === 404) {
-    return EXIT_CODE.NOT_FOUND;
-  }
-  if (status === 413) {
-    return EXIT_CODE.PAYLOAD_TOO_LARGE;
-  }
-  if (status === 400) {
-    return EXIT_CODE.USAGE_ERROR;
-  }
-  return EXIT_CODE.GENERIC_FAILURE;
+  return STATUS_EXIT_MAP[status] ?? EXIT_CODE.GENERIC_FAILURE;
 }
 
 async function ensureOk(response: Response): Promise<void> {
@@ -81,15 +86,29 @@ async function ensureOk(response: Response): Promise<void> {
 
 export class ApiClient {
   private readonly endpoint: string;
+  private readonly token: string | undefined;
 
-  public constructor(endpoint: string) {
+  public constructor(endpoint: string, token?: string) {
     this.endpoint = endpoint;
+    this.token = token;
+  }
+
+  /**
+   * Builds request headers, merging the given base headers with the
+   * `Authorization: Bearer <token>` header when a token is configured. The CLI
+   * sends no Authorization header when anonymous (contracts/cli.md).
+   */
+  private headers(base: Record<string, string> = {}): Record<string, string> {
+    if (this.token === undefined) {
+      return base;
+    }
+    return { ...base, authorization: `Bearer ${this.token}` };
   }
 
   public async pushSession(body: PushSessionBody): Promise<SessionRefDto> {
     const response = await fetch(apiUrl(this.endpoint, "/sessions"), {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: this.headers({ "content-type": "application/json" }),
       body: JSON.stringify(body),
     });
     await ensureOk(response);
@@ -99,6 +118,7 @@ export class ApiClient {
   public async getPayload(publicId: string): Promise<SessionManifest> {
     const response = await fetch(
       apiUrl(this.endpoint, `/sessions/${encodeURIComponent(publicId)}/payload`),
+      { headers: this.headers() },
     );
     await ensureOk(response);
     return (await response.json()) as SessionManifest;
@@ -110,13 +130,16 @@ export class ApiClient {
         this.endpoint,
         `/sessions/${encodeURIComponent(publicId)}/clone?agent=${encodeURIComponent(agent)}`,
       ),
+      { headers: this.headers() },
     );
     await ensureOk(response);
     return (await response.json()) as CloneInstruction;
   }
 
   public async listProjects(): Promise<ProjectDto[]> {
-    const response = await fetch(apiUrl(this.endpoint, "/projects"));
+    const response = await fetch(apiUrl(this.endpoint, "/projects"), {
+      headers: this.headers(),
+    });
     await ensureOk(response);
     return (await response.json()) as ProjectDto[];
   }
@@ -128,6 +151,7 @@ export class ApiClient {
     const query = includeArchived ? "?archived=true" : "";
     const response = await fetch(
       apiUrl(this.endpoint, `/projects/${encodeURIComponent(slug)}/sessions${query}`),
+      { headers: this.headers() },
     );
     await ensureOk(response);
     return (await response.json()) as SessionDto[];
@@ -141,7 +165,7 @@ export class ApiClient {
       apiUrl(this.endpoint, `/sessions/${encodeURIComponent(publicId)}`),
       {
         method: "PATCH",
-        headers: { "content-type": "application/json" },
+        headers: this.headers({ "content-type": "application/json" }),
         body: JSON.stringify(update),
       },
     );
@@ -152,7 +176,7 @@ export class ApiClient {
   public async deleteSession(publicId: string): Promise<void> {
     const response = await fetch(
       apiUrl(this.endpoint, `/sessions/${encodeURIComponent(publicId)}`),
-      { method: "DELETE" },
+      { method: "DELETE", headers: this.headers() },
     );
     await ensureOk(response);
   }
@@ -160,7 +184,7 @@ export class ApiClient {
   public async deleteProject(slug: string): Promise<void> {
     const response = await fetch(
       apiUrl(this.endpoint, `/projects/${encodeURIComponent(slug)}?confirm=true`),
-      { method: "DELETE" },
+      { method: "DELETE", headers: this.headers() },
     );
     await ensureOk(response);
   }
@@ -170,11 +194,23 @@ export class ApiClient {
       apiUrl(this.endpoint, `/sessions/${encodeURIComponent(publicId)}/forks`),
       {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: this.headers({ "content-type": "application/json" }),
         body: JSON.stringify(name ? { name } : {}),
       },
     );
     await ensureOk(response);
     return (await response.json()) as SessionRefDto;
+  }
+
+  /**
+   * Resolves the identity behind the configured token (GET /api/me). Backs
+   * `pss auth login` and `pss auth status`.
+   */
+  public async getMe(): Promise<IdentityDto> {
+    const response = await fetch(apiUrl(this.endpoint, "/me"), {
+      headers: this.headers(),
+    });
+    await ensureOk(response);
+    return (await response.json()) as IdentityDto;
   }
 }

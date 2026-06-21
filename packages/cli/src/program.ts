@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { ApiClient } from "./apiClient.js";
-import { resolveEndpoint } from "./config.js";
+import { resolveEndpoint, resolveToken } from "./config.js";
 
 /**
  * CLI program shell (T018): builds the commander program with global options and
@@ -11,20 +11,24 @@ import { resolveEndpoint } from "./config.js";
 export interface CliContext {
   readonly endpoint: string;
   readonly json: boolean;
+  readonly token: string | undefined;
   readonly api: ApiClient;
 }
 
 export interface GlobalOptions {
   endpoint?: string;
   json?: boolean;
+  token?: string;
 }
 
 export function buildContext(options: GlobalOptions): CliContext {
   const endpoint = resolveEndpoint(options.endpoint);
+  const token = resolveToken(options.token);
   return {
     endpoint,
     json: options.json ?? false,
-    api: new ApiClient(endpoint),
+    token,
+    api: new ApiClient(endpoint, token),
   };
 }
 
@@ -35,6 +39,10 @@ export function createProgram(): Command {
     .description("GitHub for agent sessions - capture, clone, and fork agent sessions")
     .version("0.1.0")
     .option("--endpoint <url>", "Override the API base URL")
+    .option(
+      "--token <value>",
+      "Bearer token for authenticated operations (overrides PSS_TOKEN and stored login)",
+    )
     .option("--json", "Emit machine-readable JSON instead of human output");
   return program;
 }
@@ -44,5 +52,5 @@ export function createProgram(): Command {
  */
 export function globalOptionsFrom(command: Command): GlobalOptions {
   const opts = command.optsWithGlobals() as GlobalOptions;
-  return { endpoint: opts.endpoint, json: opts.json };
+  return { endpoint: opts.endpoint, json: opts.json, token: opts.token };
 }

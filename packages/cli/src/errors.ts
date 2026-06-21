@@ -9,6 +9,8 @@ export const EXIT_CODE = {
   NOT_FOUND: 3,
   PAYLOAD_TOO_LARGE: 4,
   NO_TRANSCRIPT: 5,
+  NOT_AUTHENTICATED: 6,
+  FORBIDDEN: 7,
 } as const;
 
 export type ExitCode = (typeof EXIT_CODE)[keyof typeof EXIT_CODE];
