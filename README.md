@@ -37,6 +37,50 @@ pnpm --filter @pss/cli link --global
 Point the CLI at your portal with `PSS_ENDPOINT` if it is not at
 `http://localhost:3000`.
 
+## Sign in to the CLI
+
+The portal is gated by GitHub authentication, so stored and private sessions
+require a token. Authenticated commands (`push`, and `fork`/`clone`/`list` on
+private sessions) send a portal-issued personal access token as an
+`Authorization: Bearer <token>` header; read-only access to public sessions still
+works anonymously.
+
+1. **Create a token in the portal.** Sign in to the portal with GitHub, open the
+   token page (`/tokens`), enter a label (for example `laptop`), and click
+   **Create token**. The raw token value is shown only once - copy it before
+   leaving the page.
+2. **Store it in the CLI.** Run `pss auth login` and paste the token when
+   prompted:
+
+   ```bash
+   pss auth login
+   # Paste your portal token: ****
+   # Logged in as <your-github-login>
+   ```
+
+   Non-interactive shells (CI, scripts) can pass it directly instead of being
+   prompted:
+
+   ```bash
+   pss auth login --token <token>
+   # or, without storing it on disk:
+   PSS_TOKEN=<token> pss push
+   ```
+
+3. **Verify and manage the session.**
+
+   ```bash
+   pss auth status   # show the GitHub login the stored token resolves to
+   pss auth logout   # remove the locally stored token
+   ```
+
+The CLI resolves the token in this order, first match wins: the `--token` flag,
+the `PSS_TOKEN` environment variable, then the token stored by `pss auth login`.
+`pss auth login` validates the token against the portal before saving it to
+`~/.config/pss/config.json` (override the directory with `XDG_CONFIG_HOME`), and
+never prints the stored token back. `pss auth logout` only removes the local
+copy - revoke a token server-side from the portal token page.
+
 ## CLI usage
 
 ```bash
