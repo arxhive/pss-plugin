@@ -1,0 +1,62 @@
+name: release-cli
+
+# Builds the single-file `pss` CLI bundle and publishes it as a GitHub Release
+# asset, so users install via the curl one-liner instead of building locally.
+# Trigger by pushing a tag like `v0.1.0`, or run manually against an existing tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release for (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core and bundle the CLI
+        run: |
+          pnpm --filter @pss/core build
+          pnpm --filter @pss/cli bundle
+
+      - name: Smoke-test the bundle
+        run: node packages/cli/dist/pss.cjs --version
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          gh release create "$TAG" \
+            --title "pss CLI $TAG" \
+            --notes "Prebuilt single-file pss CLI. Install: curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh" \
+            || true
+          gh release upload "$TAG" packages/cli/dist/pss.cjs install.sh --clobber

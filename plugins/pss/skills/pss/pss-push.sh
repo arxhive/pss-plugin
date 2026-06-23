@@ -12,8 +12,8 @@
 set -euo pipefail
 
 if ! command -v pss >/dev/null 2>&1; then
-  echo "error: the 'pss' CLI is not on PATH. Build and link it first:" >&2
-  echo "  pnpm --filter @pss/cli build && pnpm --filter @pss/cli link --global" >&2
+  echo "error: the 'pss' CLI is not on PATH. Install it:" >&2
+  echo "  curl -fsSL https://raw.githubusercontent.com/arxhive/pss-plugin/main/install.sh | sh" >&2
   exit 127
 fi
 

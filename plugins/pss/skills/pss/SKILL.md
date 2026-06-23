@@ -24,8 +24,9 @@ background sync.
 
 ## Prerequisites
 
-- The `pss` CLI is installed and on `PATH`. From a checkout of the pss repo:
-  `pnpm --filter @pss/cli build && pnpm --filter @pss/cli link --global`.
+- The `pss` CLI is installed and on `PATH`. Install the prebuilt binary (needs Node 18+):
+  `curl -fsSL https://raw.githubusercontent.com/arxhive/pss-plugin/main/install.sh | sh`
+  (or build from source: `pnpm install && pnpm --filter @pss/core build && pnpm --filter @pss/cli build && cd packages/cli && pnpm link --global`).
 - `PSS_ENDPOINT` is set only to target a non-default portal; the CLI defaults to
   the hosted portal at `https://pss.cat`.
 

@@ -20,17 +20,28 @@ is discovered.
 
 ## Prerequisite: the `pss` CLI
 
-The skill shells out to the `pss` CLI, which must be on your `PATH`. Build and link
-it from a checkout of this repo ([arxhive/pss-plugin](https://github.com/arxhive/pss-plugin)):
+The skill shells out to the `pss` CLI, which must be on your `PATH`. Install the
+prebuilt binary (requires Node.js 18+):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arxhive/pss-plugin/main/install.sh | sh
+```
+
+This installs a single self-contained `pss` to `~/.local/bin` and prints how to add
+that directory to `PATH` if needed. The CLI targets the hosted portal at
+`https://pss.cat` by default. Set `PSS_ENDPOINT` to point it at a different portal.
+
+<details>
+<summary>Build from source instead (for CLI development)</summary>
 
 ```bash
 pnpm install
+pnpm --filter @pss/core build
 pnpm --filter @pss/cli build
-pnpm --filter @pss/cli link --global
+cd packages/cli && pnpm link --global   # needs `pnpm setup` once, then a new shell
 ```
 
-The CLI targets the hosted portal at `https://pss.cat` by default. Set
-`PSS_ENDPOINT` to point it at a different portal.
+</details>
 
 ## Usage
 

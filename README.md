@@ -25,17 +25,28 @@ skill is discovered, then run `/pss` in any session.
 
 ## Install the `pss` CLI
 
-The plugin (and direct terminal use) needs the `pss` CLI on your `PATH`. Build and
-link it from a checkout of this repo:
+The plugin (and direct terminal use) needs the `pss` CLI on your `PATH`. Install the
+prebuilt binary (requires Node.js 18+):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arxhive/pss-plugin/main/install.sh | sh
+```
+
+This downloads a single self-contained `pss` to `~/.local/bin` and prints how to add
+that directory to `PATH` if it is not already there. The CLI targets the hosted portal
+at `https://pss.cat` by default; set `PSS_ENDPOINT` to point it at a different portal.
+
+<details>
+<summary>Build from source instead (for CLI development)</summary>
 
 ```bash
 pnpm install
+pnpm --filter @pss/core build
 pnpm --filter @pss/cli build
-pnpm --filter @pss/cli link --global
+cd packages/cli && pnpm link --global   # needs `pnpm setup` once, then a new shell
 ```
 
-The CLI targets the hosted portal at `https://pss.cat` by default. Set
-`PSS_ENDPOINT` to point it at a different portal.
+</details>
 
 ## Sign in to the CLI
 
