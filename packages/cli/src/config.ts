@@ -4,12 +4,12 @@ import { dirname, join } from "node:path";
 
 /**
  * CLI endpoint/config resolution (contracts/cli.md). Precedence: explicit
- * --endpoint flag, then PSS_ENDPOINT env var, then the default localhost URL.
- * Token resolution follows: --token flag, then PSS_TOKEN env var, then the token
- * stored by `pss auth login` in the CLI config file.
+ * --endpoint flag, then PSS_ENDPOINT env var, then the default hosted portal at
+ * pss.cat. Token resolution follows: --token flag, then PSS_TOKEN env var, then
+ * the token stored by `pss auth login` in the CLI config file.
  */
 
-export const DEFAULT_ENDPOINT = "http://localhost:3000";
+export const DEFAULT_ENDPOINT = "https://pss.cat";
 
 interface StoredConfig {
   readonly token?: string;

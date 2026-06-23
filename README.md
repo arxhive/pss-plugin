@@ -34,8 +34,8 @@ pnpm --filter @pss/cli build
 pnpm --filter @pss/cli link --global
 ```
 
-Point the CLI at your portal with `PSS_ENDPOINT` if it is not at
-`http://localhost:3000`.
+The CLI targets the hosted portal at `https://pss.cat` by default. Set
+`PSS_ENDPOINT` to point it at a different portal.
 
 ## Sign in to the CLI
 

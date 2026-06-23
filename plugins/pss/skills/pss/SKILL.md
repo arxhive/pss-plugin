@@ -26,7 +26,8 @@ background sync.
 
 - The `pss` CLI is installed and on `PATH`. From a checkout of the pss repo:
   `pnpm --filter @pss/cli build && pnpm --filter @pss/cli link --global`.
-- `PSS_ENDPOINT` is set if the portal is not at `http://localhost:3000`.
+- `PSS_ENDPOINT` is set only to target a non-default portal; the CLI defaults to
+  the hosted portal at `https://pss.cat`.
 
 ## How to run
 
@@ -47,7 +48,7 @@ On success the skill reports the session reference and URL, for example:
 
 ```
 Pushed session github.com/arxhive/pss/Ab12Cd34Ef56Gh78Ij90Kl
-URL: http://localhost:3000/github.com/arxhive/pss/Ab12Cd34Ef56Gh78Ij90Kl
+URL: https://pss.cat/github.com/arxhive/pss/Ab12Cd34Ef56Gh78Ij90Kl
 ```
 
 Share that reference; a teammate runs `pss fork <reference> --agent <name>` to
