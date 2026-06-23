@@ -77,12 +77,25 @@ async function runPush(options: PushOptions, command: Command): Promise<void> {
   }
 
   const { agent, transcript } = await resolveAgentAndTranscript(cwd, options.agent);
+  const adapter = getAdapter(agent);
+  // Exclude the capture command's own footprint (the `/pss` invocation and the
+  // skill execution that follows it) so the shared session ends at the work that
+  // preceded it, not the act of sharing it.
+  const captured = adapter.trimCaptureCommand
+    ? adapter.trimCaptureCommand(transcript)
+    : transcript;
   // Keep the raw transcript alongside the neutral turns so cloning back into
   // the origin agent is byte-faithful (native resume needs the full envelope).
   const manifest: SessionManifest = {
-    ...getAdapter(agent).import(transcript, cwd),
-    nativeSource: { agent, content: transcript },
+    ...adapter.import(captured, cwd),
+    nativeSource: { agent, content: captured },
   };
+  if (manifest.turns.length === 0) {
+    throw new CliError(
+      "Session has no content before the pss capture command - nothing to share.",
+      EXIT_CODE.NO_TRANSCRIPT,
+    );
+  }
 
   const slug =
     options.project ??
@@ -90,7 +103,12 @@ async function runPush(options: PushOptions, command: Command): Promise<void> {
       gitRemoteUrl: await readGitRemoteUrl(cwd),
       directoryName: directoryName(cwd),
     });
-  logAction(COMMAND, { agent, slug, turns: manifest.turns.length });
+  logAction(COMMAND, {
+    agent,
+    slug,
+    turns: manifest.turns.length,
+    captureCommandTrimmed: captured.length !== transcript.length,
+  });
 
   const ref = await ctx.api.pushSession({
     name: options.name ?? manifest.title ?? `${agent} session`,

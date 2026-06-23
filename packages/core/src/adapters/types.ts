@@ -65,6 +65,14 @@ export interface AgentAdapter {
   import(nativeSource: string, originCwd: string | null): SessionManifest;
 
   /**
+   * Removes this agent's own session-capture command invocation - and every
+   * record after it - from a raw transcript, so a shared session never contains
+   * the act of sharing it. Returns the source unchanged when no such command is
+   * present. Adapters whose capture path leaves no transcript footprint omit it.
+   */
+  trimCaptureCommand?(nativeSource: string): string;
+
+  /**
    * Converts the neutral manifest into native artifacts or a handoff fallback.
    */
   export(manifest: SessionManifest, context: ExportContext): CloneInstruction;

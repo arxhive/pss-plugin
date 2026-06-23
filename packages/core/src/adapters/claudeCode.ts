@@ -95,6 +95,61 @@ function recordToTurn(record: ClaudeRecord): Turn | null {
   };
 }
 
+/**
+ * Matches the pss capture command's own invocation line in a Claude Code
+ * transcript, e.g. `<command-name>/pss</command-name>` (also the plugin-scoped
+ * form `<command-name>/<namespace>:pss</command-name>`). The `<command-name>`
+ * envelope is injected by the harness for slash commands, so a user typing
+ * "/pss" in prose will not match.
+ */
+const PSS_CAPTURE_COMMAND_PATTERN =
+  /<command-name>\s*\/(?:[\w.-]+:)?pss\s*<\/command-name>/;
+
+function isCaptureCommandRecord(record: unknown): boolean {
+  if (typeof record !== "object" || record === null) {
+    return false;
+  }
+  const candidate = record as ClaudeRecord;
+  if (normalizeRole(candidate.message?.role ?? candidate.role) !== "user") {
+    return false;
+  }
+  const text = extractText(candidate.message?.content ?? candidate.content);
+  return text !== null && PSS_CAPTURE_COMMAND_PATTERN.test(text);
+}
+
+/**
+ * Removes the pss capture command's own invocation - and every line after it -
+ * from a raw Claude Code transcript, so a shared session captures only the work
+ * that preceded the `/pss` call, never the act of sharing. The newest invocation
+ * is the cut point, so earlier work (including any prior `/pss` run) is kept.
+ * Unparseable lines are skipped rather than fatal: the transcript is read while
+ * Claude Code is still writing the in-progress capture turn, so a partial final
+ * line is expected and is dropped along with everything after the cut.
+ */
+export function trimCaptureCommand(nativeSource: string): string {
+  const lines = nativeSource.split("\n");
+  let cutIndex = -1;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]?.trim();
+    if (line === undefined || line.length === 0) {
+      continue;
+    }
+    let record: unknown;
+    try {
+      record = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (isCaptureCommandRecord(record)) {
+      cutIndex = index;
+    }
+  }
+  if (cutIndex === -1) {
+    return nativeSource;
+  }
+  return lines.slice(0, cutIndex).join("\n");
+}
+
 function importClaude(nativeSource: string, originCwd: string | null): SessionManifest {
   let records: unknown[];
   try {
@@ -265,6 +320,7 @@ export const claudeCodeAdapter: AgentAdapter = {
   supportsNativeResume: true,
   detect: detectClaude,
   import: importClaude,
+  trimCaptureCommand,
   export: exportClaude,
 };
 

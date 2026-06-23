@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   claudeCodeAdapter,
   encodeClaudeCwd,
+  trimCaptureCommand,
 } from "../../src/adapters/claudeCode.js";
 import { parseManifest } from "../../src/manifest/validate.js";
 
@@ -92,5 +93,95 @@ describe("claudeCodeAdapter", () => {
       encodeClaudeCwd("/home/dev/pss"),
     );
     expect(instruction.artifacts[0]?.path).toContain("sess-xyz.jsonl");
+  });
+});
+
+describe("trimCaptureCommand", () => {
+  const PSS_COMMAND =
+    "<command-message>pss</command-message>\n<command-name>/pss</command-name>";
+
+  function userLine(text: string): string {
+    return JSON.stringify({
+      type: "user",
+      message: { role: "user", content: [{ type: "text", text }] },
+    });
+  }
+
+  function commandLine(content: string): string {
+    return JSON.stringify({ type: "user", message: { role: "user", content } });
+  }
+
+  function assistantLine(text: string): string {
+    return JSON.stringify({
+      type: "assistant",
+      message: { role: "assistant", content: [{ type: "text", text }] },
+    });
+  }
+
+  function nonEmpty(source: string): string[] {
+    return source.split("\n").filter((line) => line.length > 0);
+  }
+
+  it("drops the capture command and every record after it", () => {
+    const source = [
+      userLine("Add a health check endpoint"),
+      assistantLine("Done."),
+      commandLine(PSS_COMMAND),
+      userLine("Base directory for this skill: /Users/d1/.claude/skills/pss"),
+      assistantLine("[tool Bash input: pss push]"),
+    ].join("\n");
+
+    const trimmed = trimCaptureCommand(source);
+
+    expect(nonEmpty(trimmed)).toHaveLength(2);
+    expect(trimmed).not.toContain("command-name");
+    expect(trimmed).not.toContain("Base directory for this skill");
+
+    const manifest = claudeCodeAdapter.import(trimmed, "/home/dev/pss");
+    expect(manifest.turns).toHaveLength(2);
+    expect(manifest.turns[1]?.text).toBe("Done.");
+  });
+
+  it("returns the transcript unchanged when no capture command is present", () => {
+    expect(trimCaptureCommand(fixture)).toBe(fixture);
+  });
+
+  it("cuts at the newest invocation, keeping earlier work and a prior run", () => {
+    const source = [
+      userLine("first task"),
+      commandLine(PSS_COMMAND),
+      userLine("more work after the first share"),
+      commandLine(PSS_COMMAND),
+      userLine("Base directory for this skill"),
+    ].join("\n");
+
+    const trimmed = trimCaptureCommand(source);
+    const lines = nonEmpty(trimmed);
+
+    expect(lines).toHaveLength(3);
+    expect(lines.filter((line) => line.includes("command-name"))).toHaveLength(1);
+    expect(trimmed).toContain("more work after the first share");
+  });
+
+  it("matches the plugin-namespaced command form", () => {
+    const source = [
+      userLine("scoped task"),
+      commandLine("<command-name>/pss:pss</command-name>"),
+      userLine("skill body"),
+    ].join("\n");
+
+    const trimmed = trimCaptureCommand(source);
+
+    expect(nonEmpty(trimmed)).toHaveLength(1);
+    expect(trimmed).toContain("scoped task");
+  });
+
+  it("does not match an unrelated command that merely starts with pss", () => {
+    const source = [
+      userLine("unrelated task"),
+      commandLine("<command-name>/pss-export</command-name>"),
+    ].join("\n");
+
+    expect(trimCaptureCommand(source)).toBe(source);
   });
 });

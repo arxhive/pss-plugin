@@ -19,7 +19,9 @@ background sync.
    replaced by `-`.
 2. Invokes the `pss` CLI, which parses the transcript into the agent-neutral
    manifest, derives the project slug from the git remote origin (or directory
-   name), and uploads it.
+   name), and uploads it. The `/pss` invocation itself - and everything after it
+   (this skill's body and the upload run) - is excluded, so the shared session
+   ends at the work that preceded the capture.
 3. Prints the shareable reference `<project-slug>/<public-id>` and the portal URL.
 
 ## Prerequisites
