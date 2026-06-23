@@ -37,7 +37,7 @@ export function createProgram(): Command {
   program
     .name("pss")
     .description("GitHub for agent sessions - capture, clone, and fork agent sessions")
-    .version("0.1.0")
+    .version("0.1.1")
     .option("--endpoint <url>", "Override the API base URL")
     .option(
       "--token <value>",
